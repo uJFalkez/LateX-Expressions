@@ -54,6 +54,32 @@ def hide_uploader():
     
 def load_import(file):
     try:
-        return json.loads(file.read())
-    except:
+        read = json.loads(file.read())
+        if len(read) == 0: return None
+        if not isinstance(list(read.values())[0], dict): return None
+        safe_checked = {k1:{k2:v2 for k2,v2 in v1.items() if isinstance(v2, str)} for k1,v1 in read.items() if isinstance(v1, dict)}
+        return safe_checked if safe_checked else None
+    except Exception as E:
+        print(E)
         return None
+    
+@st.dialog("Manage Conflicts", width="large")
+def conflict_manager(loaded, conflicts):
+    st.subheader(f"{len(conflicts)} Conflicting folder{"s" if len(conflicts)-1 else ""}...", anchor=False)
+    gap(16)
+    for folder in conflicts:
+        with st.expander(folder, expanded=True):
+            expr_conflicts = st.session_state["saved_expressions"][folder].keys() & loaded[folder].keys()
+            if len(expr_conflicts):
+                st.subheader(f"{len(expr_conflicts)} Conflicting expression{"s" if len(expr_conflicts)-1 else ""}...", anchor=False)
+                gap()
+                for expr_name in expr_conflicts:
+                    st.write(f"\"{expr_name}\":")
+                    col1,col2 = st.columns([1,1])
+                    col1.write("Current")
+                    col2.write("Uploaded")
+                    col1.container(height=100, border=False).latex(st.session_state["saved_expressions"][folder][expr_name])
+                    col2.container(height=100, border=False).latex(loaded[folder][expr_name])
+            else:
+                st.subheader("No expression conflicts.")
+            

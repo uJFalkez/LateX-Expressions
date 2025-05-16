@@ -42,7 +42,7 @@ if {} in st.session_state["saved_expressions"].values():
 with st.sidebar:
     st.title("Settings")
     st.divider()
-    if st.button("Load Example", type='primary', use_container_width=True):
+    if st.button("Load Example", icon=":material/refresh:", type='primary', use_container_width=True):
         st.session_state["EXP_INPUT_LOAD"] = "", *random.choice(list(st.session_state["example_expressions"].items()))
         st.rerun()
     gap(16)
@@ -58,10 +58,11 @@ with st.sidebar:
     gap(32)
     
     st.download_button("Export Expressions",
-                       json.dumps(st.session_state["saved_expressions"], indent=4),
+                       json.dumps(st.session_state["saved_expressions"].get(st.session_state.get("PST.FOLDER_SELECT", None), {}), indent=4),
                        file_name="expressions.json", type='primary',
-                       mime="text/json",
-                       icon=":material/download:",
+                       mime="text/json", icon=":material/download:",
+                       disabled=not st.session_state.get("PST.FOLDER_SELECT", None),
+                       help="Select a folder to export" if not st.session_state.get("PST.FOLDER_SELECT", None) else None,
                        use_container_width=True)
     gap(16)
     
@@ -74,21 +75,27 @@ with st.sidebar:
                          label_visibility="hidden")
         if file_import:
             hide_uploader()
-            loaded_exprs = load_import(file_import)
-            valid_import = loaded_exprs != None and loaded_exprs != {}
+            loaded_folders = load_import(file_import)
+            valid_import = loaded_folders != None and loaded_folders != {}
             if valid_import:
-                conflict_exprs = loaded_exprs.keys() & st.session_state["saved_expressions"]
+                conflict_folders = loaded_folders.keys() & st.session_state["saved_expressions"]
                 gap()
-                with st.container(border=True):
-                    st.write(f"{len(loaded_exprs)} expression{"s" if len(loaded_exprs)-1 else ""} found!")
-                    if len(conflict_exprs):
-                        st.write(f"{len(conflict_exprs)} conflicting expression{"s" if len(conflict_exprs)-1 else ""}...")
+                with st.container(border=False):
+                    st.write(f"{len(loaded_folders)} folder{"s" if len(loaded_folders)-1 else ""} found!")
+                    if len(conflict_folders):
+                        st.write(f"{len(conflict_folders)} conflicting folder{"s" if len(conflict_folders)-1 else ""}...")
+                        conflict_exprs = sum([len(st.session_state["saved_expressions"][folder].keys() & loaded_folders[folder]) for folder in conflict_folders])
+                        if conflict_exprs:
+                            st.write(f"{conflict_exprs} conflicting expression{"s" if conflict_exprs-1 else ""}...")
+                        st.divider()
                         gap()
                         if st.button("Manage conflicts", use_container_width=True):
+                            conflict_manager(loaded_folders, conflict_folders)
+                    else:
+                        st.divider()
+                        gap()
+                        if st.button("Commit new expressions", use_container_width=True):
                             pass
-                    gap()
-                    if st.button("Commit new expressions", use_container_width=True):
-                        pass
             else:
                 st.write("Corrupt file or no expressions found.")
 
@@ -109,7 +116,8 @@ if not hide_preview:
 gap(16)
 col1,col2,col3 = st.columns([1,1,1])
 
-if col1.button("Save Expression", type="primary", disabled=not expr_folder or not expr_name or not expr, use_container_width=True):
+if col1.button("Save Expression", icon=":material/save:", type="primary",
+               disabled=not expr_folder or not expr_name or not expr, use_container_width=True):
     if expr_folder not in st.session_state["saved_expressions"]:
         st.session_state["saved_expressions"][expr_folder] = {}
     st.session_state["saved_expressions"][expr_folder].update({expr_name:expr})
@@ -119,10 +127,12 @@ if col1.button("Save Expression", type="primary", disabled=not expr_folder or no
         st.session_state["EXP_INPUT_LOAD"] = "", "", ""
         st.rerun()
 
-if col2.button("Send to New Tab", disabled=not expr, use_container_width=True):
+if col2.button("Send to New Tab", icon=":material/arrow_outward:",
+               disabled=not expr, use_container_width=True):
     load_exp_page(expr_name, expr, font_size)
     
-if col3.button("Clear Canvas", disabled=not expr_folder and not expr_name and not expr, use_container_width=True):
+if col3.button("Clear Canvas", icon=":material/delete_sweep:",
+               disabled=not expr_folder and not expr_name and not expr, use_container_width=True):
     st.session_state["EXP_INPUT_LOAD"] = "", ""
     st.rerun()
 
@@ -146,16 +156,16 @@ if selected_folder:
             if st.button("Send to New Tab", key=f"button_print_exp_{name}", type='primary', use_container_width=True):
                 load_exp_page(name, expression, font_size)
             
-        if col2.button("Copy", key=f"button_copy_expr_{name}", use_container_width=True):
+        if col2.button("", icon=":material/content_copy:", key=f"button_copy_expr_{name}", use_container_width=True):
             pyperclip.copy(expression)
             st.toast(f"\"{name}\" was copied to the clipboard!")
             
-        if col3.button("Load", key=f"button_load_expr_{name}", use_container_width=True):
+        if col3.button("", icon=":material/arrow_warm_up:", key=f"button_load_expr_{name}", use_container_width=True):
             st.session_state["EXP_INPUT_LOAD"] = selected_folder, name, expression
             st.session_state.scroll_to_top = True
             st.rerun()
             
-        if col4.button("Delete", key=f"button_delete_expr_{name}", type="primary", use_container_width=True):
+        if col4.button("", icon=":material/delete:", key=f"button_delete_expr_{name}", type="primary", use_container_width=True):
             st.toast(f"\"{name}\" was deleted!")
             del_exp = name
 
@@ -183,3 +193,6 @@ st.markdown(f"""<style>
                 
             }}
             </style>""", unsafe_allow_html=True)
+
+with open("teste.json", "r") as file:
+    st.download_button("a", file, "teste.json")
