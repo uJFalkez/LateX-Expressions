@@ -3,9 +3,13 @@ import streamlit.components.v1 as components
 import time
 import json
 
+def gap(height=8):
+    st.markdown(f"""<p style="padding-top:{height}px"> </p>""", unsafe_allow_html=True)
+
 def save_expressions():
+    
     with open("expressions.json", 'w', encoding='utf-8') as file:
-        json.dump(st.session_state["saved_expressions"], file, indent=4)
+        json.dump({k:v for k,v in st.session_state["saved_expressions"].items() if v != {}}, file, indent=4)
 
 def load_exp_page(expr_name, expr, font_size):
     safe_expr = expr.replace("\\", "\\\\").replace('"', '\\"')
@@ -38,3 +42,18 @@ def load_exp_page(expr_name, expr, font_size):
         win.document.close();
     </script>
     """, height=0)
+
+def hide_uploader():
+    st.markdown("""<style>
+            .stFileUploader > section[data-testid="stFileUploaderDropzone"] {
+                visibility: hidden;
+                height: 0;
+                padding: 0;
+                }
+                </style>""", unsafe_allow_html=True)
+    
+def load_import(file):
+    try:
+        return json.loads(file.read())
+    except:
+        return None
