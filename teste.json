@@ -1,8 +1,18 @@
 {
-    "Controle 2025": {
+    "Pasta teste": {
         "testinhoo":"s_0 + v_0t + \\frac{1}{2}at^2",
-        "asdas":"x = y",
-        "vetor de estados":"a + b",
-        "aa":1
+        "asdas":"x = 5",
+        "Linear System":"a + g",
+        "teste": "ab"
+    },
+    "pasta teste 2": {
+        "ablublé": "9 = 3",
+        "testando de novo": "1 = 2"
+    },
+    "pasta teste 3": {
+        "seloco": "\\pi = 4"
+    },
+    "pasta teste 4": {
+        "putaria": "e = \\pi = 3"
     }
 }

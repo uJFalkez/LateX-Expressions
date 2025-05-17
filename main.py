@@ -38,6 +38,9 @@ if {} in st.session_state["saved_expressions"].values():
     st.session_state["saved_expressions"] = {k:v for k,v in st.session_state["saved_expressions"].items() if v != {}}
     st.session_state["PST.FOLDER_SELECT"] = None
     st.rerun()
+    
+if "IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE" not in st.session_state:
+    st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"] = 0
 
 with st.sidebar:
     st.title("Settings")
@@ -52,16 +55,17 @@ with st.sidebar:
     transparent_download = st.toggle("Transparent PNG", value=False)
     gap()
     clear_on_save = st.toggle("Clear on Save", value=False)
+    gap()
+    lock_delete = st.toggle("Lock delete buttons", value=True)
     gap(16)
     
     font_size = st.number_input("Font-size", value=14, min_value=8, max_value=72)
     gap(32)
     
     st.download_button("Export Expressions",
-                       json.dumps(st.session_state["saved_expressions"].get(st.session_state.get("PST.FOLDER_SELECT", None), {}), indent=4),
+                       json.dumps(st.session_state["saved_expressions"], indent=4),
                        file_name="expressions.json", type='primary',
                        mime="text/json", icon=":material/download:",
-                       disabled=not st.session_state.get("PST.FOLDER_SELECT", None),
                        help="Select a folder to export" if not st.session_state.get("PST.FOLDER_SELECT", None) else None,
                        use_container_width=True)
     gap(16)
@@ -70,6 +74,7 @@ with st.sidebar:
                  icon=":material/upload:",
                  use_container_width=True):
         file_import = st.file_uploader("import expressions",
+                         key=f"IMPORT_EXPRESSIONS_FILE_UPLOADER_{st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"]}",
                          type="json",
                          accept_multiple_files=False,
                          label_visibility="hidden")
@@ -78,24 +83,58 @@ with st.sidebar:
             loaded_folders = load_import(file_import)
             valid_import = loaded_folders != None and loaded_folders != {}
             if valid_import:
-                conflict_folders = loaded_folders.keys() & st.session_state["saved_expressions"]
-                gap()
-                with st.container(border=False):
-                    st.write(f"{len(loaded_folders)} folder{"s" if len(loaded_folders)-1 else ""} found!")
-                    if len(conflict_folders):
-                        st.write(f"{len(conflict_folders)} conflicting folder{"s" if len(conflict_folders)-1 else ""}...")
-                        conflict_exprs = sum([len(st.session_state["saved_expressions"][folder].keys() & loaded_folders[folder]) for folder in conflict_folders])
-                        if conflict_exprs:
-                            st.write(f"{conflict_exprs} conflicting expression{"s" if conflict_exprs-1 else ""}...")
-                        st.divider()
-                        gap()
-                        if st.button("Manage conflicts", use_container_width=True):
-                            conflict_manager(loaded_folders, conflict_folders)
-                    else:
-                        st.divider()
-                        gap()
-                        if st.button("Commit new expressions", use_container_width=True):
-                            pass
+                folder_count = len(loaded_folders)
+                expression_count = len([v1 for v2 in loaded_folders.values() for v1 in v2.values()])
+                
+                new_folder_count = len(set(loaded_folders) - set(st.session_state["saved_expressions"]))
+                new_exprs_count = len([v1 for v2 in {k3:{k4:v4 for k4,v4 in v3.items() if k3 not in st.session_state["saved_expressions"] or k4 not in st.session_state["saved_expressions"][k3]}
+                                                     for k3,v3 in loaded_folders.items()}.values() for v1 in v2.values()])
+                
+                conflicts = {k1:{k2:v2 for k2,v2 in v1.items() if k2 in st.session_state["saved_expressions"][k1] and st.session_state["saved_expressions"][k1][k2] != loaded_folders[k1][k2]}
+                             for k1,v1 in loaded_folders.items() if k1 in st.session_state["saved_expressions"] and
+                             any([st.session_state["saved_expressions"][k1][k3] != loaded_folders[k1][k3] for k3 in (st.session_state["saved_expressions"][k1].keys() & loaded_folders[k1].keys())])}
+                conflict_count = len([v1 for v2 in conflicts.values() for v1 in v2.values()])
+                
+                divider(1,0,2)
+                
+                cols = st.columns([1]*(((folder_count+expression_count) > 0) + ((new_folder_count+new_exprs_count) > 0) + (conflict_count > 0)))
+                col_counter = 1
+                
+                with cols[0]:
+                    st.write("Found:")
+                    st.write(f"- {folder_count} Folder{"s" if folder_count-1 else ""}")
+                    st.write(f"- {expression_count} Expression{"s" if expression_count-1 else ""}")
+                
+                if new_folder_count or new_exprs_count:
+                    with cols[1]:
+                        st.write("New:")
+                        if new_folder_count: st.write(f"- {new_folder_count} Folder{"s" if new_folder_count-1 else ""}")
+                        if new_exprs_count: st.write(f"- {new_exprs_count} Expression{"s" if new_exprs_count-1 else ""}")
+                        st.write("ㅤㅤㅤㅤㅤㅤㅤㅤㅤ")
+                    col_counter += 1
+                if len(conflicts):
+                    with cols[col_counter]:
+                        st.write("Conflicts:")
+                        st.write(f"- {len(conflicts)} Folder{"s" if len(conflicts)-1 else ""}")
+                        st.write(f"- {conflict_count} Expression{"s" if conflict_count-1 else ""}")
+                        st.write("ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ")
+                    divider(-1.5)
+                    if st.button("Manage conflicts", icon=":material/rule:", use_container_width=True):
+                        conflict_manager(loaded_folders, conflicts)
+                elif new_folder_count or new_exprs_count:
+                    divider(-1.5)
+                    if st.button("Commit new expressions", icon=":material/rule:", use_container_width=True):
+                        for k, v in loaded_folders.items():
+                            if k not in st.session_state["saved_expressions"]:
+                                st.session_state["saved_expressions"][k] = v
+                            else:
+                                st.session_state["saved_expressions"][k].update(v)
+                        st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"] += 1
+                        save_expressions()
+                        st.rerun()
+                else:
+                    divider(1,0,2)
+                    st.write("No new imports.")
             else:
                 st.write("Corrupt file or no expressions found.")
 
@@ -133,7 +172,7 @@ if col2.button("Send to New Tab", icon=":material/arrow_outward:",
     
 if col3.button("Clear Canvas", icon=":material/delete_sweep:",
                disabled=not expr_folder and not expr_name and not expr, use_container_width=True):
-    st.session_state["EXP_INPUT_LOAD"] = "", ""
+    st.session_state["EXP_INPUT_LOAD"] = "", "", ""
     st.rerun()
 
 if st.session_state["saved_expressions"]:
@@ -142,7 +181,14 @@ if st.session_state["saved_expressions"]:
 
 del_exp = None
 gap()
-selected_folder = st.selectbox("Folder:", placeholder="Select a folder", index=None, key="PST.FOLDER_SELECT", options=st.session_state["saved_expressions"], label_visibility="hidden")
+col1,col2 = st.columns([3.95,1])
+selected_folder = col1.selectbox("Folder:", placeholder="Select a folder", index=None, key="PST.FOLDER_SELECT", options=st.session_state["saved_expressions"], label_visibility="hidden")
+with col2: gap(28)
+col2.download_button("Export Folder", json.dumps({selected_folder:st.session_state["saved_expressions"].get(selected_folder, {})}, indent=4),
+                     disabled=not selected_folder, type="primary", icon=":material/download:",
+                     file_name=f"{selected_folder}_expressions.json",
+                     use_container_width=True)
+
 gap(16)
 
 if selected_folder:
@@ -165,7 +211,7 @@ if selected_folder:
             st.session_state.scroll_to_top = True
             st.rerun()
             
-        if col4.button("", icon=":material/delete:", key=f"button_delete_expr_{name}", type="primary", use_container_width=True):
+        if col4.button("", icon=":material/delete:", key=f"button_delete_expr_{name}", disabled=lock_delete, type="primary", use_container_width=True):
             st.toast(f"\"{name}\" was deleted!")
             del_exp = name
 

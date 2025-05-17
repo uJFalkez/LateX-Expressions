@@ -6,6 +6,9 @@ import json
 def gap(height=8):
     st.markdown(f"""<p style="padding-top:{height}px"> </p>""", unsafe_allow_html=True)
 
+def divider(top: float = 0, right: float = 0, bottom: float = 0, left: float = 0):
+    st.markdown(f"""<hr style="margin:{top}rem {right}rem {bottom}rem {left}rem">""", unsafe_allow_html=True)
+
 def save_expressions():
     
     with open("expressions.json", 'w', encoding='utf-8') as file:
@@ -57,7 +60,7 @@ def load_import(file):
         read = json.loads(file.read())
         if len(read) == 0: return None
         if not isinstance(list(read.values())[0], dict): return None
-        safe_checked = {k1:{k2:v2 for k2,v2 in v1.items() if isinstance(v2, str)} for k1,v1 in read.items() if isinstance(v1, dict)}
+        safe_checked = {k1:{k2:v2 for k2,v2 in v1.items() if isinstance(v2, str)} for k1,v1 in read.items() if isinstance(v1, dict) and v1 != {}}
         return safe_checked if safe_checked else None
     except Exception as E:
         print(E)
@@ -65,21 +68,41 @@ def load_import(file):
     
 @st.dialog("Manage Conflicts", width="large")
 def conflict_manager(loaded, conflicts):
-    st.subheader(f"{len(conflicts)} Conflicting folder{"s" if len(conflicts)-1 else ""}...", anchor=False)
+    save_pos = st.columns([1])[0]
     gap(16)
-    for folder in conflicts:
+    st.subheader(f"{len(conflicts)} Conflicting folder{"s" if len(conflicts)-1 else ""}...", anchor=False)
+    st.write("(Select to override, don't select to skip)")
+    gap(16)
+    selection = {}
+    for i, folder in enumerate(conflicts.keys()):
+        selection.update({folder:{}})
         with st.expander(folder, expanded=True):
-            expr_conflicts = st.session_state["saved_expressions"][folder].keys() & loaded[folder].keys()
-            if len(expr_conflicts):
-                st.subheader(f"{len(expr_conflicts)} Conflicting expression{"s" if len(expr_conflicts)-1 else ""}...", anchor=False)
-                gap()
-                for expr_name in expr_conflicts:
-                    st.write(f"\"{expr_name}\":")
-                    col1,col2 = st.columns([1,1])
-                    col1.write("Current")
-                    col2.write("Uploaded")
-                    col1.container(height=100, border=False).latex(st.session_state["saved_expressions"][folder][expr_name])
-                    col2.container(height=100, border=False).latex(loaded[folder][expr_name])
+            st.subheader(f"{len(conflicts[folder])} Conflicting expression{"s" if len(conflicts[folder])-1 else ""}...", anchor=False)
+            divider(1,0,2)
+            gap()
+            for j, expr_name in enumerate(conflicts[folder].keys()):
+                selection[folder].update({expr_name:st.checkbox(f"\"{expr_name}\":", key=f"CHECKBOX-CONFLICT-{j}-{i}")})
+                col1,col2 = st.columns([1,1])
+                col1.markdown("""<p style="text-align:center">Current</p>""", unsafe_allow_html=True)
+                col2.markdown("""<p style="text-align:center">Uploaded</p>""", unsafe_allow_html=True)
+                col1.container(key=f"KATEX-CONTAINER-CONFLICT-{j}-{i}-A",height=100, border=False).latex(st.session_state["saved_expressions"][folder][expr_name])
+                col2.container(key=f"KATEX-CONTAINER-CONFLICT-{j}-{i}-B", height=100, border=False).latex(conflicts[folder][expr_name])
+                divider(1,0,2)
+        gap(32)
+    
+    if save_pos.button("Merge new expressions and override ALL conflicts", icon=":material/warning:", disabled=any([v1 for v2 in selection.values() for v1 in v2.values()]), type="primary", use_container_width=True):
+        for k, v in loaded.items():
+            st.session_state["saved_expressions"][k].update(v)
+        st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"] += 1
+        save_expressions()
+        st.rerun()
+    
+    if st.button("Merge new expressions and override the selected", icon=":material/warning:", disabled=not any([v1 for v2 in selection.values() for v1 in v2.values()]), type="primary", use_container_width=True):
+        for k, v in loaded.items():
+            if k not in st.session_state["saved_expressions"]:
+                st.session_state["saved_expressions"][k] = v
             else:
-                st.subheader("No expression conflicts.")
-            
+                st.session_state["saved_expressions"][k].update({k1:v1 for k1,v1 in v.items() if k in selection and k1 in selection[k] and selection[k][k1]})
+        st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"] += 1
+        save_expressions()
+        st.rerun()
