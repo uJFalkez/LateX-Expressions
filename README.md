@@ -1,48 +1,36 @@
-# LaTeX Expression Canvas
+# LaTeX Expressions Canvas
 
-A minimalistic and powerful web app to manage and preview LaTeX expressions. Ideal for students, engineers, researchers, and anyone who frequently works with mathematical notation. The interface is clean, focused, and avoids bloat — designed for speed and usability.
+This is a simple and intuitive app for managing LaTeX expressions. You can organize them into folders, adjust their font size, preview, and export/import your data easily.
 
-## 🚀 Features
+## 📂 Data
 
-- 📁 **Folder-based organization**: Save LaTeX expressions grouped in named folders.
-- 📋 **Copy to clipboard**: Quickly copy expressions with one click.
-- 🗑️ **Delete expressions**: Remove entries easily, with safety in mind.
-- 🧩 **Open in new tab**: Launch any expression in a separate fullscreen tab for printing or screenshot.
-- 🔠 **Font size control**: Adjust the rendered LaTeX font size dynamically.
-- 🔒 **Delete lock**: Prevent accidental deletions by locking the delete button.
-- 🧼 **Clear-on-save toggle**: Optionally clear the canvas after saving a new expression.
-- 📤 **Export folders**: Export an entire folder as a JSON file.
-- 📦 **Export all data**: Download your entire expression library at once.
-- 📥 **Import with conflict resolution**: Import expressions from JSON, with per-expression override control if naming conflicts occur.
-- 👁️ **Toggle preview rendering**: Disable expression preview on canvas for lightweight use or focus mode.
-- 🧪 **Load example expressions**: Populate the app with sample LaTeX expressions to get started or test.
+Internally, the data is stored in a compact and efficient structure: folders and expressions are indexed by their names, and JSON exports reflect this structure for easy readability and versioning.
 
-## 🧠 Data Structure
+Exported and imported data are handled as `.json` files. There's no restriction on the filename — only the content structure and file type matter.
 
-Internally, the data is stored in a compact and efficient structure:
+One key feature is expression conflict handling on import — like a basic built-in Git system for resolving duplicates.
 
-All folders and expressions are indexed by their names, and JSON exports reflect this structure for easy readability and versioning.
+## Beta: 🎧 **Expression Listener**
 
-## 🛠️ Tech Stack
+The Listener allows integration between your symbolic development workflow and the app.
 
-- **Frontend**: [Streamlit](https://streamlit.io/)
-- **Rendering**: MathJax for LaTeX preview
-- **Clipboard / File Handling**: Native browser APIs
-- **Data format**: JSON
+It's essentially a local socket at `http://localhost:8501/listener/<user_key>`. You can `POST` LaTeX expressions to this endpoint to render them inside the app in real-time.
 
-## 💻 Running the App
+For usage examples, refer to: `<link>`. It’s pretty straightforward to use!
 
-```bash
-pip install streamlit
-streamlit run app.py
-```
+## 📢 Notes
+Internally, it's quite difficult to lose data. In the worst-case scenario (e.g. a crash), restarting the app should restore all previously saved expressions.
 
-Exported data is saved as .json, with the following format:
-{
-  "Algebra": {
-    "Quadratic Formula": "\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"
-  },
-  "Calculus": {
-    "Euler's Identity": "e^{i\\pi} + 1 = 0"
-  }
-}
+The app is designed for fast access — ideal for study notes, report writing, or live demonstrations.
+
+## ✨ Coming Soon (Ideas)
+- Expression search/filter bar
+
+- LaTeX syntax validation
+
+- Dark mode toggle
+
+- Integration with SymPy / PySR for symbolic development
+
+## 📞 Contact
+For questions, suggestions, or bug reports, contact: matubaramarcos@gmail.com
