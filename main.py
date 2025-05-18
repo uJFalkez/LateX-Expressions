@@ -10,14 +10,21 @@ st.set_page_config(layout="wide", page_title="LaTeX", page_icon=":scroll:")
 if st.session_state.get("scroll_to_top", True):
     scroll_to_here(0, key='top')
     st.session_state.scroll_to_top = False
-st.divider()
-st.title("LaTeX Expressions Engine", anchor=False)
     
 for k, v in st.session_state.items():
     if k.startswith("PST."):
         st.session_state[k] = v
 
-if "saved_expressions" not in st.session_state:
+if "LISTENER" not in st.session_state:
+    st.session_state["LISTENER"] = False
+    
+if "LISTENER_KEY" not in st.session_state:
+    st.session_state["LISTENER_KEY"] = "default"
+    
+import listener
+
+if "saved_expressions" not in st.session_state or st.session_state.get("reload_expressions", True):
+    st.session_state["reload_expressions"] = False
     with open("expressions.json", 'r', encoding='utf-8') as file:
         st.session_state["saved_expressions"] = json.load(file)
     with open("examples.json", 'r', encoding='utf-8') as file:
@@ -48,11 +55,13 @@ with st.sidebar:
     if st.button("Load Example", icon=":material/refresh:", type='primary', use_container_width=True):
         st.session_state["EXP_INPUT_LOAD"] = "", *random.choice(list(st.session_state["example_expressions"].items()))
         st.rerun()
+    gap()
+    if st.button("Reload Expressions", icon=":material/sync:", type='primary', use_container_width=True):
+        st.session_state["reload_expressions"] = True
+        st.rerun()
     gap(16)
     
     hide_preview = st.toggle("Hide Expression Preview", value=False)
-    gap()
-    transparent_download = st.toggle("Transparent PNG", value=False)
     gap()
     clear_on_save = st.toggle("Clear on Save", value=False)
     gap()
@@ -137,6 +146,28 @@ with st.sidebar:
                     st.write("No new imports.")
             else:
                 st.write("Corrupt file or no expressions found.")
+
+    
+    gap(24)
+    divider(0,0,3)
+    if st.toggle("Listener"):
+        gap(24)
+        st.session_state["LISTENER_KEY"] = st.sidebar.text_input("Listener socket key", key="PST.LISTENER_KEY", placeholder="default") or "default"
+        gap(16)
+        st.session_state["LISTENER"] = True
+        if st.button("See caught expressions", disabled=not st.session_state["LISTENER"], icon=":material/call_received:", type='primary', use_container_width=True):
+            listener_dialog()
+    else:
+        gap(24)
+        with st.popover("What is the Listener?", icon=":material/help:", use_container_width=True):
+            st.write("The Listener is a functionality to integrate your test applications with the LaTeX Engine.")
+            st.write("It's essentially a socket hosted locally at **/localhost:8501/listener/<key>**")
+            st.write("One could send a POST to this socket with LaTeX expressions to be rendered at the app.")
+            st.write("For usage examples, refer to <link>, it's not too hard to use.")
+        st.session_state["LISTENER"] = False
+
+st.divider()
+st.title("LaTeX Expressions Engine", anchor=False)
 
 gap(16)
 expr_folder = st.selectbox("Folder:", options=st.session_state["saved_expressions"], placeholder="Folder name", index=None, accept_new_options=True, key="PST.EXP_FOLDER_INPUT")

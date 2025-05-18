@@ -23,6 +23,6 @@
         "d2theta2 formatado": "\\begin{equation*}\n\\frac{d^2\\theta_2}{dt^2} = \n- \\frac{\n\\begin{aligned}\n&2 L^{2} \\alpha m \\bigg(\n    6 L \\beta m (F_p + \\tilde{F}) \\\\\n    &\\quad - (M + 2m)(6 L \\alpha \\tilde{\\theta}_1 g m + T_{p_1} + \\tilde{T})\n\\bigg) \\\\\n&\\quad - \\left(\n    9 L^{2} \\beta^{2} m^{2} - (4I + 5L^{2} m)(M + 2m)\n\\right)(2L \\tilde{\\theta}_2 g m - T_{p_2})\n\\end{aligned}\n}{\n\\begin{aligned}\n&4 L^{4} \\alpha^{2} m^{2} (M + 2m) \\\\\n&\\quad + (4I + L^{2} m)\\left(\n    9 L^{2} \\beta^{2} m^{2} - (4I + 5L^{2} m)(M + 2m)\n\\right)\n\\end{aligned}\n}\n\\end{equation*}",
         "Linear System": "a + x",
         "testinhoo": "s_0 + v_0t + \\frac{1}{2}at^2",
-        "asdas": "x = z"
+        "asdas": "x = l"
     }
 }

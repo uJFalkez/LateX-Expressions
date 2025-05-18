@@ -106,3 +106,16 @@ def conflict_manager(loaded, conflicts):
         st.session_state["IMPORT_EXPRESSIONS_FILE_UPLOADER_KEY_CHANGE"] += 1
         save_expressions()
         st.rerun()
+        
+@st.dialog("Listener", width="large")
+def listener_dialog():
+    if not st.session_state["INBOUND_EXPRESSIONS"]:
+        st.header("No Expressions Caught!")
+    else:
+        st.header(f"{len(st.session_state["INBOUND_EXPRESSIONS"])} Expressions Caught!")
+        
+        st.write(st.session_state["INBOUND_EXPRESSIONS"])
+        
+        if st.button("Dismiss all", type="primary", use_container_width=True):
+            st.session_state["INBOUND_EXPRESSIONS"] = []
+            st.rerun()
