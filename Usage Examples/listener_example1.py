@@ -38,9 +38,15 @@ payload = {
 
 # "default" is the default socket key
 print(requests.post("http://localhost:8501/listener/default", json=payload))
+# Will print:
+# <Response [200]>, if the POST is successful and the app caught it
+# <Response [403]>, if the socket key is incorrect (the key can be user-defined in the app)
+# <Response [404]>, if the Listener is turned off
+# <Response [500]>, if something went wrong in the app (hopefully never happens lol)
+# May raise timeout error if the app is not running
 
 # Done! Now, the expression may show in "See caught expressions" within the app
-# You may also send multiple expressions, by using "payload" in the format:
+# Upcoming: <You will also be able to send multiple expressions, by using "payload" in the format:
 # payload = [
 #    {
 #    "expr":latex1,
@@ -52,4 +58,4 @@ print(requests.post("http://localhost:8501/listener/default", json=payload))
 #    "name":expr_name2,
 #    "folder":expr_folder2
 #    }
-#]
+#]>
