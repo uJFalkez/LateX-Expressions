@@ -160,10 +160,10 @@ with st.sidebar:
     else:
         gap(24)
         with st.popover("What is the Listener?", icon=":material/help:", use_container_width=True):
-            st.write("The Listener is a functionality to integrate your test applications with the LaTeX Engine.")
+            st.write("The Listener is a functionality to integrate your symbolic development with the app.")
             st.write("It's essentially a socket hosted locally at **/localhost:8501/listener/<key>**")
             st.write("One could send a POST to this socket with LaTeX expressions to be rendered at the app.")
-            st.write("For usage examples, refer to <link>, it's not too hard to use.")
+            st.write("For usage examples, refer to <link>, it's not too hard to use!")
         st.session_state["LISTENER"] = False
 
 st.divider()
