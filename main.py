@@ -20,8 +20,9 @@ if "LISTENER" not in st.session_state:
     
 if "LISTENER_KEY" not in st.session_state:
     st.session_state["LISTENER_KEY"] = "default"
-    
-import listener
+
+if "INBOUND_EXPRESSIONS" not in st.session_state:
+    st.session_state["INBOUND_EXPRESSIONS"] = []
 
 if "saved_expressions" not in st.session_state or st.session_state.get("reload_expressions", True):
     st.session_state["reload_expressions"] = False
@@ -30,11 +31,12 @@ if "saved_expressions" not in st.session_state or st.session_state.get("reload_e
     with open("examples.json", 'r', encoding='utf-8') as file:
         st.session_state["example_expressions"] = json.load(file)
 
-if not st.session_state.get("refreshed", 0):
-    st.session_state["refreshed"] = 1
+if not st.session_state.get("refreshed", False):
+    st.session_state["refreshed"] = True
     example_name, example_exp = random.choice(list(st.session_state["example_expressions"].items()))
     st.session_state["PST.EXP_NAME_INPUT"] = example_name
     st.session_state["PST.EXP_INPUT"] = example_exp
+    st.rerun()
 
 if st.session_state.get("EXP_INPUT_LOAD", 0):
     st.session_state["PST.EXP_FOLDER_INPUT"], st.session_state["PST.EXP_NAME_INPUT"], st.session_state["PST.EXP_INPUT"] = st.session_state["EXP_INPUT_LOAD"]
@@ -151,6 +153,8 @@ with st.sidebar:
     gap(24)
     divider(0,0,3)
     if st.toggle("Listener"):
+        import listener
+        listener.init_session_state(st.session_state)
         gap(24)
         st.session_state["LISTENER_KEY"] = st.sidebar.text_input("Listener socket key", key="PST.LISTENER_KEY", placeholder="default") or "default"
         gap(16)
@@ -270,6 +274,3 @@ st.markdown(f"""<style>
                 
             }}
             </style>""", unsafe_allow_html=True)
-
-with open("teste.json", "r") as file:
-    st.download_button("a", file, "teste.json")

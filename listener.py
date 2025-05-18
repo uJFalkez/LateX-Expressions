@@ -1,10 +1,12 @@
-import streamlit as st
-from st_route import *
+from st_route import st_route
 from typing import Union, Any, Dict, List, Tuple
 import json
 
-if "INBOUND_EXPRESSIONS" not in st.session_state:
-  st.session_state["INBOUND_EXPRESSIONS"] = []
+global session_state
+
+def init_session_state(ss):
+  global session_state
+  session_state = ss
 
 @st_route(path='listener/(.*)', globally=True)
 def API_listener(
@@ -27,8 +29,9 @@ def API_listener(
       Tuple[int, bytes/str, Dict[str, Any]]: HTTP response code with body and additional headers
     If you don't need any of the arguments, just use **kwargs.
     """
-    if not st.session_state["LISTENER"]: return 404, "NOT FOUND"
-    if path_args[0].decode() != st.session_state["LISTENER_KEY"]: return 403, "FORBIDDEN"
+    global session_state
+    if not session_state["LISTENER"]: return 404, "NOT FOUND"
+    if path_args[0].decode() != session_state["LISTENER_KEY"]: return 403, "FORBIDDEN"
     try:
       json_data = json.loads(body.decode())
     except:
@@ -39,5 +42,5 @@ def API_listener(
     name = json_data.get("name", "")
     expr = json_data["expr"]
     
-    st.session_state["INBOUND_EXPRESSIONS"].append({"folder":folder,"name":name,"expr":expr})
+    session_state["INBOUND_EXPRESSIONS"].append({"folder":folder,"name":name,"expr":expr})
     return 200, "OK"
