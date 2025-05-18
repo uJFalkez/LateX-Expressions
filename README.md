@@ -16,7 +16,7 @@ The Listener allows integration between your symbolic development workflow and t
 
 It's essentially a local socket at `http://localhost:8501/listener/<user_key>`. You can `POST` LaTeX expressions to this endpoint to render them inside the app in real-time.
 
-For usage examples, refer to: `<link>`. It’s pretty straightforward to use!
+For usage examples, refer to [this example](https://github.com/uJFalkez/LateX-Expressions/blob/main/Usage%20Examples/listener_example1.py). It’s pretty straightforward to use!
 
 ## 📢 Notes
 Internally, it's quite difficult to lose data. In the worst-case scenario (e.g. a crash), restarting the app should restore all previously saved expressions.
