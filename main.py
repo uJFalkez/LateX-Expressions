@@ -1,15 +1,13 @@
 import streamlit as st
-from streamlit_scroll_to_top import scroll_to_here
 import json
-import pyperclip
+from pandas import DataFrame
 import random
-from utils import *
+import os.path as os_path
 
 st.set_page_config(layout="wide", page_title="LaTeX", page_icon=":scroll:")
 
-if st.session_state.get("scroll_to_top", True):
-    scroll_to_here(0, key='top')
-    st.session_state.scroll_to_top = False
+st.session_state.FILE_DIR = FILE_DIR = os_path.dirname(os_path.abspath(__file__))
+from utils import *
     
 for k, v in st.session_state.items():
     if k.startswith("PST."):
@@ -26,9 +24,9 @@ if "INBOUND_EXPRESSIONS" not in st.session_state:
 
 if "saved_expressions" not in st.session_state or st.session_state.get("reload_expressions", True):
     st.session_state["reload_expressions"] = False
-    with open("expressions.json", 'r', encoding='utf-8') as file:
+    with open(f"{FILE_DIR}\\expressions.json", 'r', encoding='utf-8') as file:
         st.session_state["saved_expressions"] = json.load(file)
-    with open("examples.json", 'r', encoding='utf-8') as file:
+    with open(f"{FILE_DIR}\\examples.json", 'r', encoding='utf-8') as file:
         st.session_state["example_expressions"] = json.load(file)
 
 if not st.session_state.get("refreshed", False):
@@ -238,12 +236,11 @@ if selected_folder:
                 load_exp_page(name, expression, font_size)
             
         if col2.button("", icon=":material/content_copy:", key=f"button_copy_expr_{name}", use_container_width=True):
-            pyperclip.copy(expression)
+            DataFrame([expression]).to_clipboard(index=False,header=False)
             st.toast(f"\"{name}\" was copied to the clipboard!")
             
         if col3.button("", icon=":material/arrow_warm_up:", key=f"button_load_expr_{name}", use_container_width=True):
             st.session_state["EXP_INPUT_LOAD"] = selected_folder, name, expression
-            st.session_state.scroll_to_top = True
             st.rerun()
             
         if col4.button("", icon=":material/delete:", key=f"button_delete_expr_{name}", disabled=lock_delete, type="primary", use_container_width=True):

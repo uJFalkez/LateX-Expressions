@@ -3,6 +3,8 @@ import streamlit.components.v1 as components
 import time
 import json
 
+FILE_DIR = st.session_state.FILE_DIR
+
 def gap(height=8):
     st.markdown(f"""<p style="padding-top:{height}px"> </p>""", unsafe_allow_html=True)
 
@@ -11,7 +13,7 @@ def divider(top: float = 0, right: float = 0, bottom: float = 0, left: float = 0
 
 def save_expressions():
     
-    with open("expressions.json", 'w', encoding='utf-8') as file:
+    with open(f"{FILE_DIR}\\expressions.json", 'w', encoding='utf-8') as file:
         json.dump({k:v for k,v in st.session_state["saved_expressions"].items() if v != {}}, file, indent=4)
 
 def load_exp_page(expr_name, expr, font_size):
